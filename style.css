@@ -12,7 +12,7 @@
 @media(min-width:700px){.hero{height:190px}}
 
 /* 최종 모바일 디자인: 제목과 등산지도 중심, 관리자 메뉴 비노출 */
-@import url('https://fonts.googleapis.com/css2?family=Jua&display=swap');
+
 :root{color:#263e2e;background:#fbfcf7}
 body{background:linear-gradient(180deg,#f8fcf7,#fffdf7 400px);padding-bottom:100px}
 .hero{height:168px;background:linear-gradient(180deg,#d7f4ff 0%,#eaf9ff 65%,#d3edce 100%);border-bottom:0;overflow:hidden}
@@ -30,3 +30,11 @@ body{background:linear-gradient(180deg,#f8fcf7,#fffdf7 400px);padding-bottom:100
 
 /* 산행 통계: 최근 참여일 / 오른 산 / 등산 횟수 */
 .statPanel{background:#fff;border:1px solid #dce9d5;box-shadow:0 3px 14px #345b3510}.statPanel p{padding:12px 10px;margin:0;border-bottom:1px solid #e8eee2}.statPanel p:last-child{border-bottom:0}.statPanel b{color:#256b40}.title-green{border-bottom:4px solid #76ae6d;border-radius:45%}.view h2{letter-spacing:-.02em}
+
+/* V3: 실제 모바일 글씨체와 지도 핀 보정 */
+body,button,input,select,textarea{font-family:'Jua','Malgun Gothic',sans-serif}
+.hero h1{font-family:'Jua','Malgun Gothic',sans-serif;font-weight:400;letter-spacing:-.015em}
+.stats small,.stats strong,.view h2,.entry b,.bottom small{font-family:'Jua','Malgun Gothic',sans-serif}
+.stats small{font-size:13px}.stats strong{font-size:clamp(15px,4vw,21px)}
+.oreum-pin{display:block;width:36px;height:44px;filter:drop-shadow(0 2px 3px #173e3070)}
+.oreum-pin svg{display:block}.leaflet-marker-icon.oreum-pin{background:transparent;border:0}
