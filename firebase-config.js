@@ -9,4 +9,4 @@ export const firebaseConfig = {
 };
 
 // Firebase Authentication > 사용자에서 만든 관리자 계정의 UID
-export const ADMIN_UID = "";
+export const ADMIN_UID = "grPaSjfWBJdSh4rV0qabB0WjcJJ3";
