@@ -38,3 +38,6 @@ body,button,input,select,textarea{font-family:'Jua','Malgun Gothic',sans-serif}
 .stats small{font-size:13px}.stats strong{font-size:clamp(15px,4vw,21px)}
 .oreum-pin{display:block;width:36px;height:44px;filter:drop-shadow(0 2px 3px #173e3070)}
 .oreum-pin svg{display:block}.leaflet-marker-icon.oreum-pin{background:transparent;border:0}
+
+/* 과거 산행 일괄 등록: 관리자 화면 전용 */
+.bulkPanel{background:#f2f9e9;border:1px solid #d4e8c9;border-radius:19px;padding:15px;margin:22px 0}.bulkPanel h3{margin:0 0 7px}.bulkPanel .secondary{margin:8px 0}.bulkPanel .primary{width:100%;margin-top:12px}.bulkRow{font-size:13px;padding:8px 3px;border-bottom:1px solid #dae9d4;margin:0}.bulkPanel #bulkStatus{font-size:13px;color:#27553c;line-height:1.5}

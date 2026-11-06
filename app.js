@@ -20,10 +20,10 @@ const koreaBounds=L.latLngBounds([32.8,124.2],[39.1,131.9]);
 map=L.map('map',{zoomControl:true,maxBounds:koreaBounds,maxBoundsViscosity:1,minZoom:6});
 map.fitBounds([[33.1,125.4],[38.7,130.3]],{padding:[12,12]});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap contributors'}).addTo(map);
 const icon=(emoji,cls)=>L.divIcon({html:`<span class="${cls}" aria-label="${cls==='visitedPin'?'오른 산':'주요 산'}"><svg viewBox="0 0 40 48" width="36" height="44" aria-hidden="true"><path d="M20 46C12 34 2 25 2 18a18 18 0 1 1 36 0c0 7-10 16-18 28Z" fill="${cls==='visitedPin'?'#f18b4d':'#3e8954'}" stroke="white" stroke-width="2.5"/><path d="m8 25 9-12 5 7 5-5 7 10Z" fill="white"/><path d="m17 13 3 4-4 1Z" fill="#c6e5c4"/></svg></span>`,className:'oreum-pin',iconSize:[36,44],iconAnchor:[18,43],popupAnchor:[0,-39]});
-function drawMap(){markers.forEach(m=>map.removeLayer(m));markers=[];peaks.forEach(([name,lat,lng])=>{if(hikes.some(h=>h.mountain===name))return;let m=L.marker([lat,lng],{icon:icon('','mountainPin')}).addTo(map).bindPopup(`<b>${esc(name)}</b><p>주요 산 · 아직 등록된 산행이 없어요.</p>`);markers.push(m)});const grouped=new Map();hikes.forEach(h=>{const key=`${Number(h.lat).toFixed(3)},${Number(h.lng).toFixed(3)}`;if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(h)});grouped.forEach(group=>{let h=group[0];let m=L.marker([h.lat,h.lng],{icon:icon('','visitedPin')}).addTo(map);const box=document.createElement('div');box.innerHTML=`<b>${esc(h.mountain)}</b><p>${group.length}회 다녀옴</p>`;const btn=document.createElement('button');btn.textContent='산행 기록 보기';btn.onclick=()=>showDetail(group.sort((a,b)=>b.date.localeCompare(a.date))[0].id);box.append(btn);m.bindPopup(box);markers.push(m)})}
+function drawMap(){markers.forEach(m=>map.removeLayer(m));markers=[];peaks.forEach(([name,lat,lng])=>{if(hikes.some(h=>h.mountain===name))return;let m=L.marker([lat,lng],{icon:icon('','mountainPin')}).addTo(map).bindPopup(`<b>${esc(name)}</b><p>주요 산 · 아직 등록된 산행이 없어요.</p>`);markers.push(m)});const grouped=new Map();hikes.filter(h=>!h.isPlace&&h.lat!=null&&h.lng!=null&&Number.isFinite(Number(h.lat))&&Number.isFinite(Number(h.lng))).forEach(h=>{const key=`${Number(h.lat).toFixed(3)},${Number(h.lng).toFixed(3)}`;if(!grouped.has(key))grouped.set(key,[]);grouped.get(key).push(h)});grouped.forEach(group=>{let h=group[0];let m=L.marker([h.lat,h.lng],{icon:icon('','visitedPin')}).addTo(map);const box=document.createElement('div');box.innerHTML=`<b>${esc(h.mountain)}</b><p>${group.length}회 다녀옴</p>`;const btn=document.createElement('button');btn.textContent='산행 기록 보기';btn.onclick=()=>showDetail(group.sort((a,b)=>b.date.localeCompare(a.date))[0].id);box.append(btn);m.bindPopup(box);markers.push(m)})}
 function card(h){const el=document.createElement('button');el.className='entry';const p=h.photos?.[0]?.url;el.innerHTML=`${p?`<img src="${esc(p)}" alt="${esc(h.mountain)} 산행 사진">`:'<span class="placeholder">🌲</span>'}<div class="info"><b>${esc(h.mountain)}</b><small>📅 ${dateFmt(h.date)}${heightText(h)}</small><small>벙주: ${esc(h.host)}</small><small>📸 ${(h.photos||[]).length}장</small></div><span class="arrow">›</span>`;el.onclick=()=>showDetail(h.id);return el}
 function fillCards(id,arr){const el=$(id);el.replaceChildren();if(!arr.length){el.innerHTML='<p class="empty">아직 등록된 산행이 없어요. 🌱</p>';return}arr.forEach(h=>el.append(card(h)))}
-function render(){const s=sorted(),unique=new Set(hikes.map(h=>h.mountain.trim()));$('lastDate').textContent=dateFmt(s[0]?.date);$('mountainCount').textContent=unique.size;$('hikeCount').textContent=hikes.length;$('statLast').textContent=dateFmt(s[0]?.date);$('statMountains').textContent=unique.size;$('statHikes').textContent=hikes.length;fillCards('recentList',s.slice(0,3));const years=[...new Set(s.map(h=>h.date.slice(0,4)))];const prev=$('yearFilter').value;$('yearFilter').innerHTML='<option value="">전체 연도</option>'+years.map(y=>`<option value="${y}">${y}년</option>`).join('');$('yearFilter').value=years.includes(prev)?prev:'';renderFiltered();$('yearStats').innerHTML=years.length?years.map(y=>{const n=s.filter(h=>h.date.startsWith(y)).length;return `<div class="yearbar">${y}년 · ${n}회<i style="width:${Math.max(3,n/Math.max(1,hikes.length)*100)}%"></i></div>`}).join(''):'<p class="empty">기록을 추가하면 연도별 통계가 표시돼요.</p>';drawMap();renderManage()}
+function render(){const s=sorted(),unique=new Set(hikes.filter(h=>!h.isPlace).flatMap(h=>h.mountain.split(/[·・]/).map(n=>n.trim()).filter(Boolean)));$('lastDate').textContent=dateFmt(s[0]?.date);$('mountainCount').textContent=unique.size;$('hikeCount').textContent=hikes.length;$('statLast').textContent=dateFmt(s[0]?.date);$('statMountains').textContent=unique.size;$('statHikes').textContent=hikes.length;fillCards('recentList',s.slice(0,3));const years=[...new Set(s.map(h=>h.date.slice(0,4)))];const prev=$('yearFilter').value;$('yearFilter').innerHTML='<option value="">전체 연도</option>'+years.map(y=>`<option value="${y}">${y}년</option>`).join('');$('yearFilter').value=years.includes(prev)?prev:'';renderFiltered();$('yearStats').innerHTML=years.length?years.map(y=>{const n=s.filter(h=>h.date.startsWith(y)).length;return `<div class="yearbar">${y}년 · ${n}회<i style="width:${Math.max(3,n/Math.max(1,hikes.length)*100)}%"></i></div>`}).join(''):'<p class="empty">기록을 추가하면 연도별 통계가 표시돼요.</p>';drawMap();renderManage()}
 function renderFiltered(){const q=$('search').value.trim().toLowerCase(),y=$('yearFilter').value;fillCards('recordList',sorted().filter(h=>(!y||h.date.startsWith(y))&&(!q||[h.mountain,h.host,h.story].some(v=>String(v||'').toLowerCase().includes(q)))))}$('search').oninput=renderFiltered;$('yearFilter').onchange=renderFiltered;
 function showDetail(id){const h=hikes.find(h=>h.id===id);if(!h)return;const body=$('detailBody');body.innerHTML=`<h2>⛰️ ${esc(h.mountain)}</h2><p>📅 ${dateFmt(h.date)}</p><p>🙋 벙주: ${esc(h.host)}</p>${heightText(h)?`<p>⛰️ 해발고도: ${Number(h.elevation).toLocaleString()}m</p>`:''}${h.story?`<p>${esc(h.story)}</p>`:''}<div class="gallery"></div>`;const g=body.querySelector('.gallery');(h.photos||[]).forEach(p=>{const a=document.createElement('a');a.href=p.url;a.target='_blank';a.rel='noopener noreferrer';const im=document.createElement('img');im.src=p.url;im.alt=h.mountain+' 산행 사진';a.append(im);g.append(a)});$('detail').showModal()}$('closeDetail').onclick=()=>$('detail').close();
 if(configured){try{const app=initializeApp(firebaseConfig);auth=getAuth(app);db=getFirestore(app);storage=getStorage(app);$('setupNotice').hidden=true;onSnapshot(collection(db,'hikes'),snapshot=>{hikes=snapshot.docs.map(d=>({id:d.id,...d.data()}));render()},e=>{$('setupNotice').hidden=false;$('setupNotice').textContent='기록을 불러오지 못했어요. Firebase 보안 규칙과 설정을 확인하세요: '+e.message});onAuthStateChanged(auth,u=>{user=u?.uid===ADMIN_UID?u:null;$('loginForm').hidden=Boolean(user);$('adminPanel').hidden=!user;$('userLabel').textContent=user?.email||'';if(u&&!user){signOut(auth);$('formMessage').textContent='관리자 계정이 아닙니다.'}renderManage()})}catch(e){$('setupNotice').textContent='Firebase 설정 오류: '+e.message}}else{$('loginForm').hidden=true;$('setupNotice').textContent='미리보기 모드입니다. 지도를 둘러볼 수 있어요. 사진 등록을 시작하려면 README 안내에 따라 Firebase를 연결하세요.';render()}
@@ -34,4 +34,75 @@ function preview(){const el=$('photoPreview');el.replaceChildren();keptPhotos.fo
 async function compressed(file){const bmp=await createImageBitmap(file);const scale=Math.min(1,1600/Math.max(bmp.width,bmp.height));const canvas=document.createElement('canvas');canvas.width=Math.round(bmp.width*scale);canvas.height=Math.round(bmp.height*scale);canvas.getContext('2d').drawImage(bmp,0,0,canvas.width,canvas.height);bmp.close();return new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('사진 압축 실패')),'image/jpeg',.78))}
 function resetForm(){$('hikeForm').reset();$('editId').value='';keptPhotos=[];selectedFiles=[];preview();$('formTitle').textContent='산행 기록 추가';$('cancelEdit').hidden=true;$('mountainResults').replaceChildren();$('formMessage').textContent=''}$('cancelEdit').onclick=resetForm;
 $('hikeForm').onsubmit=async e=>{e.preventDefault();if(!user)return;const editId=$('editId').value,old=hikes.find(h=>h.id===editId),data={mountain:$('mountainInput').value.trim(),date:$('date').value,host:$('host').value.trim(),story:$('story').value.trim(),lat:Number($('lat').value),lng:Number($('lng').value),elevation:$('elevation').value===''?null:Number($('elevation').value)};if(!data.mountain||!data.date||!data.host||!Number.isFinite(data.lat)||!Number.isFinite(data.lng))return;if(keptPhotos.length+selectedFiles.length>10)return alert('사진은 최대 10장이에요.');$('save').disabled=true;$('formMessage').textContent='사진과 기록을 저장하고 있어요...';const newPaths=[];try{const photos=[...keptPhotos];for(const f of selectedFiles){const blob=await compressed(f);const path=`hikes/${crypto.randomUUID()}.jpg`;const r=ref(storage,path);await uploadBytes(r,blob,{contentType:'image/jpeg'});newPaths.push(path);photos.push({url:await getDownloadURL(r),path})}data.photos=photos;if(editId)await updateDoc(doc(db,'hikes',editId),data);else await addDoc(collection(db,'hikes'),{...data,createdAt:serverTimestamp()});resetForm();$('formMessage').textContent='저장했어요! 🌿';if(old){const kept=new Set(photos.map(p=>p.path));for(const p of old.photos||[])if(p.path&&!kept.has(p.path))try{await deleteObject(ref(storage,p.path))}catch(e){console.warn('이전 사진 삭제 실패',e)}}}catch(err){$('formMessage').textContent='저장 실패: '+err.message+' (업로드된 사진은 저장소에서 정리해야 할 수 있어요.)';console.error(err)}finally{$('save').disabled=false}};
+// 2023~2026년 산행 메모를 기준으로 한 일괄 등록 목록 (총 54회).
+// 좌표는 산행 경로가 아닌 대표 지점의 근사 위치이며, 불명확한 코스는 지도 표시를 생략합니다.
+const legacyHikes=[
+  ["2023-08-16","안산","귀신",37.577,126.946],
+  ["2023-08-19","축령산","슈가",37.753,127.333],
+  ["2023-08-27","사패산","동석",37.719,127.008],
+  ["2023-09-02","감악산","망고",37.941,126.969],
+  ["2023-10-18","북한산 숨은벽","방장",37.668,126.971],
+  ["2023-10-22","치악산","지니",37.365,128.055],
+  ["2023-11-11","오대산 노인봉·비로봉","망고",37.794,128.543],
+  ["2023-11-19","수락산","고은",37.699,127.081],
+  ["2023-12-03","관악산","비라",37.445,126.964],
+  ["2023-12-12","함백산·태백산","타타",37.161,128.917],
+  ["2023-12-22","여주 반려마루","뭉치",null,null],
+  ["2024-01-05","인왕산","오태식",37.584,126.957],
+  ["2024-01-10","칠갑산","타타",36.413,126.904],
+  ["2024-01-20","계방산","망고",37.729,128.465],
+  ["2024-01-27","설악산 울산바위","지니",38.196,128.469],
+  ["2024-01-28","계양산","상민",37.553,126.713],
+  ["2024-02-07","아차산","프리져",37.566,127.102],
+  ["2024-02-11","망우 용마 아차산","골디",37.588,127.105],
+  ["2024-02-24","사패 도봉산","지니",37.704,127.01],
+  ["2024-03-10","마니산","맨발",37.613,126.435],
+  ["2024-03-16","가리 팔봉산","망고",null,null],
+  ["2024-04-06","비슬 와룡 금오산","망고",null,null],
+  ["2024-04-14","화악산","정기산행",37.993,127.503],
+  ["2024-05-01","축두리봉 비봉","상민",37.626,126.958],
+  ["2024-05-19","북설악 신선대","지니",38.268,128.454],
+  ["2024-05-25","설악산 대청봉","지니",38.119,128.466],
+  ["2024-06-01","인왕산 초소책방","비라",37.584,126.957],
+  ["2024-06-02","팔공산","망고",36.016,128.695],
+  ["2024-08-09","관악산 야등","타타",37.445,126.964],
+  ["2024-08-10","청계산","팡야",37.414,127.044],
+  ["2024-09-01","안산인왕","맨발",37.577,126.946],
+  ["2024-09-28","청광종주","먹뚱",null,null],
+  ["2024-10-19","무등산","망고",35.121,126.989],
+  ["2024-12-28","도락산 가은산","지니",36.874,128.258],
+  ["2025-01-18","발왕산","망고",37.609,128.671],
+  ["2025-01-25","두타산","망고",37.425,129.003],
+  ["2025-02-14","소백산","비라",36.957,128.485],
+  ["2025-03-22","삼악산","누렁이",37.878,127.66],
+  ["2025-03-28","충남3산","큼큼",null,null],
+  ["2025-04-12","천주산","망고",null,null],
+  ["2025-05-23","공룡능선","쟁이",38.14,128.445],
+  ["2025-06-07","월출산","망고 우앙",34.767,126.705],
+  ["2025-10-31","간월재","정기산행",35.555,129.045],
+  ["2026-04-26","불암산","혜룡 민경",37.663,127.095],
+  ["2026-05-01","계룡산","망고",36.361,127.211],
+  ["2026-05-16","소백산","민경",36.957,128.485],
+  ["2026-06-09","북한산 백운대","모니",37.659,126.978],
+  ["2026-07-25","내연산","망고",36.283,129.274],
+  ["2026-08-01","곰배령(만항재)","망고",null,null],
+  ["2026-09-05","관악산","금성호",37.445,126.964],
+  ["2026-09-07","인왕산","산이",37.584,126.957],
+  ["2026-09-30","주왕산","깡깡",36.388,129.159],
+  ["2026-10-04","지리산 청학동-중산리","외계인",35.337,127.731],
+  ["2026-10-09","설악산","쟁이 하이",38.119,128.466],
+].map(([date,mountain,host,lat,lng])=>({date,mountain,host,lat,lng,story:'',elevation:null,photos:[],isPlace:mountain==='여주 반려마루'}));
+const bulkKey=h=>[h.date,String(h.mountain||'').trim().replace(/\s+/g,' '),String(h.host||'').trim()].join('|');
+function bulkMissing(){const existing=new Set(hikes.map(bulkKey));return legacyHikes.filter(h=>!existing.has(bulkKey(h)))}
+$('bulkPreviewButton').onclick=()=>{const panel=$('bulkPreview');panel.hidden=!panel.hidden;if(!panel.hidden){const rows=$('bulkRows');rows.replaceChildren();const existing=new Set(hikes.map(bulkKey));legacyHikes.forEach(h=>{const p=document.createElement('p');p.className='bulkRow';p.textContent=`${h.date} · ${h.mountain} · ${h.host}${existing.has(bulkKey(h))?' (이미 등록됨)':''}`;rows.append(p)});$('bulkSaveButton').disabled=!bulkMissing().length;$('bulkStatus').textContent=`신규 등록 대상: ${bulkMissing().length}개 / 전체 ${legacyHikes.length}개`;}};
+$('bulkSaveButton').onclick=async()=>{
+  if(!user){$('bulkStatus').textContent='관리자 로그인이 필요해요.';return}
+  const pending=bulkMissing();if(!pending.length){$('bulkStatus').textContent='모든 기록이 이미 등록되어 있어요.';return}
+  if(!confirm(`2023~2026년 산행 기록 ${pending.length}개를 등록할까요? (사진 없음)`))return;
+  const button=$('bulkSaveButton');button.disabled=true;let saved=0;
+  try{for(const h of pending){if(!user)throw Error('관리자 로그인이 해제됐어요.');await addDoc(collection(db,'hikes'),{...h,createdAt:serverTimestamp()});saved++;$('bulkStatus').textContent=`${saved}/${pending.length}개 등록 중...`}
+    $('bulkStatus').textContent=`완료! ${saved}개 등록했어요. 이미 등록된 기록은 건너뛰었어요. 🌿`;
+  }catch(err){$('bulkStatus').textContent=`${saved}개 등록 후 중단됐어요: ${err.message}. 다시 누르면 등록된 기록은 건너뜁니다.`}
+  finally{button.disabled=false;}
+};
 function renderManage(){const el=$('manageList');el.replaceChildren();if(!user)return;sorted().forEach(h=>{const box=document.createElement('div');box.className='entry';box.innerHTML=`<div class="info"><b>${esc(h.mountain)}</b><small>${dateFmt(h.date)} · ${esc(h.host)}</small></div>`;const actions=document.createElement('div');actions.className='actions';const edit=document.createElement('button');edit.textContent='수정';edit.onclick=()=>{resetForm();$('editId').value=h.id;$('mountainInput').value=h.mountain;$('date').value=h.date;$('host').value=h.host;$('story').value=h.story||'';$('lat').value=h.lat;$('lng').value=h.lng;$('elevation').value=h.elevation??'';keptPhotos=[...(h.photos||[])];preview();$('formTitle').textContent='산행 기록 수정';$('cancelEdit').hidden=false;$('hikeForm').scrollIntoView({behavior:'smooth'})};const del=document.createElement('button');del.textContent='삭제';del.onclick=async()=>{if(!confirm(`${h.mountain} (${h.date}) 기록을 삭제할까요?`))return;try{await deleteDoc(doc(db,'hikes',h.id));for(const p of h.photos||[])if(p.path)try{await deleteObject(ref(storage,p.path))}catch(e){console.warn(e)}}catch(e){alert('삭제 실패: '+e.message)}};actions.append(edit,del);box.append(actions);el.append(box)})}
